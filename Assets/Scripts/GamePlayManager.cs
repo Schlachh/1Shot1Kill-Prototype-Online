@@ -57,7 +57,7 @@ public class GamePlayManager : MonoBehaviour, IOnEventCallback
     //Define Photon events
     private const byte TIMER_UPDATE = 1;
     private const byte UPDATE_NAMES = 2;
-    private const byte UPDATE_SCORE = 3;
+    private const byte UPDATE_MAXSCORE = 3;
 
 
     [Header("Other Components")]
@@ -95,6 +95,11 @@ public class GamePlayManager : MonoBehaviour, IOnEventCallback
             player1ScoreText.text = player1Name + " : " + player1Score;
             player2ScoreText.text = player2Name + " : " + player2Score;
         }
+        if(data.Code == UPDATE_MAXSCORE)
+        {
+            object[] localData = (object[])data.CustomData;
+            maxScore = (int)localData[0];
+        }
     }
     #endregion
 
@@ -130,6 +135,9 @@ public class GamePlayManager : MonoBehaviour, IOnEventCallback
                 //format your data into an array of objects
                 object[] data = new object[] { player1Name, player2Name };
                 PhotonNetwork.RaiseEvent(UPDATE_NAMES, data, RaiseEventOptions.Default, SendOptions.SendUnreliable);
+
+                object[] scoreData = new object[] { maxScore };
+                PhotonNetwork.RaiseEvent(UPDATE_MAXSCORE, scoreData, RaiseEventOptions.Default, SendOptions.SendReliable);
             }
         }
         view = GetComponent<PhotonView>();
@@ -143,6 +151,12 @@ public class GamePlayManager : MonoBehaviour, IOnEventCallback
         {
             DisplayTimer();
         }
+    }
+    [PunRPC]
+    void SyncGameSettings(int maxScore, float gameDuration)
+    {
+        this.maxScore = maxScore;
+        this.gameDuration = gameDuration;
     }
 
     [PunRPC]
@@ -257,6 +271,11 @@ public class GamePlayManager : MonoBehaviour, IOnEventCallback
         //set game state
         gameState = State.Intro;
 
+        if (PhotonNetwork.IsMasterClient)
+        {
+            view.RPC("SyncGameSettings", RpcTarget.All, maxScore, gameDuration);
+        }
+
         if (!isOnline)
         {
             //Spawn players for the first time
@@ -365,6 +384,17 @@ public class GamePlayManager : MonoBehaviour, IOnEventCallback
     {
         {
             yield return new WaitForSeconds(5);
+
+            //Disconnect from Photon server
+            PhotonNetwork.Disconnect();
+
+            //Wait for disconnection to complete
+            while (PhotonNetwork.IsConnected)
+            {
+                yield return null;
+            }
+
+            //Load Main menu scene if disconnected successfully
             SceneManager.LoadScene("MainMenu");
         }
     }

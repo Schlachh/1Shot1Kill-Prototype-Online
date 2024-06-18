@@ -35,14 +35,10 @@ public class Collectable : MonoBehaviourPunCallbacks
 
             if (otherView != null && otherView.IsMine)
             {
-                OnCollected?.Invoke();
-                PhotonNetwork.Destroy(gameObject);  // Destroy the object across the network
-
-                int playerId = otherView.OwnerActorNr; // Get the actor number (ID) of the player
-                gamePlayManager.view.RPC("UpdateAmmo", RpcTarget.All, playerId, 1);  // Call the UpdateAmmo RPC
-
-                // Request MasterClient to destroy the object
-                photonView.RPC("RequestDestroy", RpcTarget.MasterClient);
+                OnCollected?.Invoke();                
+                               
+                // Request MasterClient to destroy the object              
+                photonView.RPC("RequestDestroy", RpcTarget.MasterClient, otherView.OwnerActorNr);
             }
         }
         else // Local multiplayer mode
@@ -62,12 +58,13 @@ public class Collectable : MonoBehaviourPunCallbacks
         }
     }
     [PunRPC]
-    void RequestDestroy()
+    void RequestDestroy(int playerId)
     {
         // Ensure only the MasterClient handles this
         if (PhotonNetwork.IsMasterClient)
         {
             PhotonNetwork.Destroy(gameObject);
+            gamePlayManager.view.RPC("UpdateAmmo", RpcTarget.All, playerId, 1);  // Call the UpdateAmmo RPC
         }
     }
 

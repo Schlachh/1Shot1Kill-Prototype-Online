@@ -14,7 +14,7 @@ public class GameData
 
     //Game settings or information
     public float maxRoundTime = 120f;
-    public int maxKills = 10;
+    public int maxKills = 30;
 
     public string[] lastPlayerNames = new string[2];
 
