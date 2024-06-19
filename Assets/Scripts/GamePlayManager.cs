@@ -136,6 +136,7 @@ public class GamePlayManager : MonoBehaviour, IOnEventCallback
                 object[] data = new object[] { player1Name, player2Name };
                 PhotonNetwork.RaiseEvent(UPDATE_NAMES, data, RaiseEventOptions.Default, SendOptions.SendUnreliable);
 
+                maxScore = 30;
                 object[] scoreData = new object[] { maxScore };
                 PhotonNetwork.RaiseEvent(UPDATE_MAXSCORE, scoreData, RaiseEventOptions.Default, SendOptions.SendReliable);
             }
